@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npx tsc -p .",
     "clean": "rm -Rf *.zip",
-    "main": "export DB_HOST=127.0.0.1 && export DB_PORT=3306 && export DB_USER=root && export DB_PASSWORD=Password1234% && export DB_NAME=listado_usuarios && ts-node ./src/main.ts",
+    "main": "export FROM_EMAIL=hectormao.gonzalez@gmail.com && export AWS_PROFILE=personal && export EMAIL=hectormao.gonzalez@gmail.com && export DB_NAME=listado_usuarios && export SECRET_ID=cursolambda && ts-node ./src/main.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "pack": "npm run clean && npm run build && npx npm-pack-zip"
   },
@@ -26,10 +26,16 @@
     "inversify": "6.0.1",
     "reflect-metadata": "0.1.13",
     "mariadb": "3.0.1",
-    "json2csv": "5.0.7"
+    "json2csv": "5.0.7",
+    "mimemessage": "1.0.5"
   },
   "bundledDependencies": [
     "aws-sdk",
-    "http-status"
+    "http-status",
+    "inversify",
+    "reflect-metadata",
+    "mariadb",
+    "json2csv",
+    "mimemessage"
   ]
 }

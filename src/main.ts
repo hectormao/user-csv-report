@@ -8,11 +8,7 @@ import { handler } from "./handler";
 const event: APIGatewayProxyEvent = {} as APIGatewayProxyEvent;
 const context: Context = {} as Context;
 
-const resultPromise: Promise<APIGatewayProxyResult> = handler(
-  event,
-  context,
-  (error, data) => {}
-) as Promise<APIGatewayProxyResult>;
+const resultPromise: Promise<any> = handler(event, context) as Promise<any>;
 
 resultPromise.then(
   (result) => console.log(result),

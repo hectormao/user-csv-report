@@ -4,24 +4,44 @@ import { UsuarioRepository } from "../repository/usuario.repository";
 import { UsuarioService } from "../service/usuario.service";
 import TYPES from "../inversify/types";
 import { createPool, Pool } from "mariadb";
-import { SES } from "aws-sdk";
+import { SecretsManager, SES } from "aws-sdk";
+import { GetSecretValueResponse } from "aws-sdk/clients/secretsmanager";
 
-const container: Container = new Container();
-container.bind<UsuarioRepository>(TYPES.Repository).to(UsuarioRepository);
-container.bind<UsuarioService>(TYPES.Service).to(UsuarioService);
+const getContainer = async () => {
+  const container: Container = new Container();
+  container.bind<UsuarioRepository>(TYPES.Repository).to(UsuarioRepository);
+  container.bind<UsuarioService>(TYPES.Service).to(UsuarioService);
 
-const pool: Pool = createPool({
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || "3306"),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || "5"),
-});
+  const secret: SecretsManager = new SecretsManager({
+    region: process.env.AWS_REGION || "us-east-1",
+  });
 
-const ses: SES = new SES({ apiVersion: "2010-12-01" });
+  const secretId: string = process.env.SECRET_ID as string;
 
-container.bind<Pool>(TYPES.DBPool).toConstantValue(pool);
-container.bind<SES>(TYPES.SES).toConstantValue(ses);
+  const dbSecret: GetSecretValueResponse = await secret
+    .getSecretValue({ SecretId: secretId })
+    .promise();
 
-export default container;
+  const credentials: any = JSON.parse(dbSecret.SecretString as string);
+
+  console.log(credentials);
+
+  const pool: Pool = createPool({
+    host: credentials.host,
+    port: credentials.port,
+    user: credentials.username,
+    password: credentials.password,
+    database: process.env.DB_NAME,
+    connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || "5"),
+  });
+
+  const ses: SES = new SES({
+    apiVersion: "2010-12-01",
+    region: process.env.AWS_REGION || "us-east-1",
+  });
+
+  container.bind<Pool>(TYPES.DBPool).toConstantValue(pool);
+  container.bind<SES>(TYPES.SES).toConstantValue(ses);
+  return container;
+};
+export default getContainer;
